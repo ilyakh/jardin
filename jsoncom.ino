@@ -1,4 +1,5 @@
 #include <aJSON.h>
+#include <handler.ino>
 
 // [+] Convention: all 'value' fields are floats; true/false = 1.0, 0.0
 // [+] Add event simulation functions for testing (alters the values stored in the status object);
@@ -31,9 +32,53 @@ typedef struct Target {
   float (*callback) (); // function that handles the reading request
 };
 
+
+/**
+ *  Current targets:
+ *  # sensor readings
+ *  0: pH-level of the liquid (requires: liquid tank temperature)
+ *  1: electric conductivity of the liquid
+ *  2: relative humidity of the upper chamber
+ *  3: liquid tank temperature
+ *  4: upper chamber temperature
+ *  5: liquid level
+ *  
+ *  Additional targets:
+ *  +0:  level of nutrient
+ *  +1:  level of pH+
+ *  +2:  level of pH-
+ *  +3:  light pollution level of the liquid tank
+ *  
+ */
 Target targets[2];
 
 
+
+void setup() {
+
+  // Communication and handshake
+  
+  Serial.begin( BAUD_RATE );
+  
+  // Defines sensor targets
+  // The callback procedure handles the request and returns a value 
+  // (or, sendes a report directly into the Serial stream)
+  
+  Target acidity;
+   acidity.command = "pH";
+   acidity.code = 1;
+   acidity.callback = random_reading;
+  
+  targets[0] = acidity;
+  
+  Target conductivity;
+   conductivity.command = "EC";
+   conductivity.code = 2;
+   conductivity.callback = random_reading;   
+  
+  targets[1] = conductivity;
+  
+}
 
 
 
@@ -94,35 +139,11 @@ void empty_buffer() {
 }
 
 
-void setup() {
 
-  // Communication and handshake
-  
-  Serial.begin( BAUD_RATE );
-  
-  // Defines sensor targets
-  // The callback procedure handles the request and returns a value 
-  // (or, sendes a report directly into the Serial stream)
-  
-  Target acidity;
-   acidity.command = "pH";
-   acidity.code = 1;
-   acidity.callback = random_reading;
-  
-  targets[0] = acidity;
-  
-  Target conductivity;
-   conductivity.command = "EC";
-   conductivity.code = 2;
-   conductivity.callback = random_reading;   
-  
-  targets[1] = conductivity;
-  
-}
 
 void loop() {    
   
-  if ( complete ) {
+  if ( complete ) { // process request
       
       // toggle the state of buffer
       complete = false; 
@@ -136,7 +157,7 @@ void loop() {
       aJson.deleteItem( request );      
       // aJson.deleteItem( command );
       
-      empty_buffer ();
+      empty_buffer(); // empty request
     }
   
 }
