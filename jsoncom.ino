@@ -28,7 +28,7 @@ String       command;
 typedef struct Target {
   String command; // key
   int code; // numerical key
-  float (*callback) (); // the function that handles the reading request
+  float (*callback) (); // function that handles the reading request
 };
 
 Target targets[2];
