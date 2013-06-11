@@ -1,35 +1,37 @@
 #include <aJSON.h>
 
-// [+] Convention: all 'value' fields are floats;
-// [+] Add event emulation functions (alters the values stored in the status object);
+// [+] Convention: all 'value' fields are floats; true/false = 1.0, 0.0
+// [+] Add event simulation functions for testing (alters the values stored in the status object);
 
-
-
-// constants
-const int REQUEST_BYTES = 256; // identifies number of bytes to reserve for request
-const char TERMINATOR = '\n';
+// identifies number of bytes to reserve for request 
 // [!] requests larger than REQUEST_BYTES will be truncated
+const int   REQUEST_BYTES = 256; // [!] keep low, impacts memory om Duemilanove
+const char  TERMINATOR = '\n'; // [!] avoid pretty formated json
+const int   BAUD_RATE = 9600;
 
 // uses following variables to build requests
 char request_buffer[ REQUEST_BYTES ];
-int buffer_index = 0;
+int  buffer_index = 0;
 
+// state of the request 
+// (toggle to true, if the terminal character is appended to the request_buffer)
 boolean complete = false;
 
 // identifies the serial_stream as Hardware Serial for the json-library
-aJsonStream serial_stream( &Serial );
+aJsonStream  serial_stream( &Serial );
 
+// stores the incoming request and its details
 aJsonObject* request;
-String command;
+String       command;
 
-typedef struct Callback {
-  String name;
-  int code;
-  
-  float (*f) ();
+
+typedef struct Target {
+  String command; // key
+  int code; // numerical key
+  float (*callback) (); // the function that handles the reading request
 };
 
-Callback callbacks[2];
+Target targets[2];
 
 
 
@@ -58,23 +60,25 @@ float random_reading() {
 }
 
 void reply( String command ) {
-  Serial.print( "Executing command" );
+  Serial.print( "Executing command: " );
   Serial.println( command );
   
-  // [-] debug
   
-  int iterations = sizeof( callbacks ) / sizeof(Callback);
+  // report (debug, temporary)
+  int iterations = sizeof( targets ) / sizeof( Target );
   float result = 0.0;
-  Serial.println( iterations );
   
+  
+  // [/] probably fetch by enum instead?
   for ( int i = 0; i < iterations; i++ ) {
-    if ( callbacks[i].name == command ) {
+    if ( command == targets[i].command ) {
        Serial.print( "Running operation #" );
-       Serial.print( callbacks[i].code );
+       Serial.print( targets[i].code );
+       Serial.println();
        
-       result = callbacks[i].f();
+       result = targets[i].callback();
        
-       Serial.println( "Callback result: " );       
+       Serial.println( "Reading result: " );       
        Serial.println( result );
        
        Serial.println();
@@ -82,25 +86,37 @@ void reply( String command ) {
   }
 }
 
+void empty_buffer() {
+  // [?] will this interfere 
+  for ( int i = 0; i < sizeof( request_buffer ) / sizeof( char ); i++ ) {
+     request_buffer[i] = '\0'; 
+  }
+}
+
 
 void setup() {
+
+  // Communication and handshake
   
-  Callback n;
-   n.name = "pH";
-   n.code = 1;
-   n.f = random_reading;
+  Serial.begin( BAUD_RATE );
   
-  callbacks[0] = n;
+  // Defines sensor targets
+  // The callback procedure handles the request and returns a value 
+  // (or, sendes a report directly into the Serial stream)
   
-  Callback m;
-   m.name = "EC";
-   m.code = 2;
-   m.f = random_reading;   
+  Target acidity;
+   acidity.command = "pH";
+   acidity.code = 1;
+   acidity.callback = random_reading;
   
-  callbacks[1] = m;
+  targets[0] = acidity;
   
+  Target conductivity;
+   conductivity.command = "EC";
+   conductivity.code = 2;
+   conductivity.callback = random_reading;   
   
-  Serial.begin( 9600 );
+  targets[1] = conductivity;
   
 }
 
@@ -119,7 +135,9 @@ void loop() {
 
       aJson.deleteItem( request );      
       // aJson.deleteItem( command );
-  }
+      
+      empty_buffer ();
+    }
   
 }
 
