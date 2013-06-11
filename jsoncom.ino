@@ -1,6 +1,9 @@
 #include <aJSON.h>
 
-// Convention: all 'value' fields are floats
+// [+] Convention: all 'value' fields are floats;
+// [+] Add event emulation functions (alters the values stored in the status object);
+
+
 
 // constants
 const int REQUEST_BYTES = 256; // identifies number of bytes to reserve for request
@@ -16,16 +19,20 @@ boolean complete = false;
 // identifies the serial_stream as Hardware Serial for the json-library
 aJsonStream serial_stream( &Serial );
 
+aJsonObject* request;
+String command;
 
-typedef struct callback {
-  char code;
-  float value;
+typedef struct Callback {
+  String name;
+  int code;
+  
+  float (*f) ();
 };
 
-callback ph = {
-  1, // code 
-  (random(0,100) * 0.001)
-};
+Callback callbacks[2];
+
+
+
 
 
 /*
@@ -46,15 +53,53 @@ void composeResponse( char* t, float v, char* u ) {
 }
 */
 
+float random_reading() {
+  return 0.001 * random( 1, 100 ); 
+}
 
 void reply( String command ) {
   Serial.print( "Executing command" );
   Serial.println( command );
+  
+  // [-] debug
+  
+  int iterations = sizeof( callbacks ) / sizeof(Callback);
+  float result = 0.0;
+  Serial.println( iterations );
+  
+  for ( int i = 0; i < iterations; i++ ) {
+    if ( callbacks[i].name == command ) {
+       Serial.print( "Running operation #" );
+       Serial.print( callbacks[i].code );
+       
+       result = callbacks[i].f();
+       
+       Serial.println( "Callback result: " );       
+       Serial.println( result );
+       
+       Serial.println();
+    }
+  }
 }
 
 
 void setup() {
-   
+  
+  Callback n;
+   n.name = "pH";
+   n.code = 1;
+   n.f = random_reading;
+  
+  callbacks[0] = n;
+  
+  Callback m;
+   m.name = "EC";
+   m.code = 2;
+   m.f = random_reading;   
+  
+  callbacks[1] = m;
+  
+  
   Serial.begin( 9600 );
   
 }
@@ -64,13 +109,16 @@ void loop() {
   if ( complete ) {
       
       // toggle the state of buffer
-      complete = false;
+      complete = false; 
       
       // extract command from the incoming request   
-      aJsonObject* request = aJson.parse( request_buffer );
-      aJsonObject* command = aJson.getObjectItem( request, "command" );
+      request = aJson.parse( request_buffer );
+      command = aJson.getObjectItem( request, "command" )->valuestring;
       
-      reply( command->valuestring );
+      reply( command );
+
+      aJson.deleteItem( request );      
+      // aJson.deleteItem( command );
   }
   
 }
