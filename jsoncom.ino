@@ -45,10 +45,24 @@ typedef struct Target {
  *  
  *  Additional targets:
  *  +0:  level of nutrient
- *  +1:  level of pH+
- *  +2:  level of pH-
+ *  +1:  level of pH+ solution
+ *  +2:  level of pH- solution
  *  +3:  light pollution level of the liquid tank
  *  
+ *  Calibration targets:
+ *  0:  calibrate pH at 4.0
+ *  1:  calibrate pH at 7.0
+ *  2:  calibrate pH at 10.0
+ *  3:  calibrate EC at 3000us
+ *  4:  calibrate EC at 200us
+ *  
+ *  Test simulation targets:
+ *  0:  simulate pH at level x, during next t seconds
+ *  1:  simulate EC at x ppm, during next t seconds
+ *  2:  simulate liquid level at x inches, during next t seconds
+ *  3:  simulate relative humidity at x %, during next t seconds
+ *  4:  simulate liquid tank temperature at x deg. C, during next t seconds
+ *  5:  simulate upper chamber temperature at x deg. C, during next t seconds
  */
 Target targets[2];
 
