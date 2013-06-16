@@ -36,8 +36,6 @@ void requestEC() {
     }
     
     
-    
-    
     serialPort.write( '\n' );
     
   }
@@ -46,11 +44,26 @@ void requestEC() {
 
 
 void draw() {
+    
   
 
   if ( messageBuffer != "" ) {
-    println( messageBuffer );
-    serialPort.clear();
+    
+    try {
+      
+      JSON responseObject = JSON.parse( messageBuffer );
+      println( responseObject );
+      
+      println( "Current value of the reading: " );
+      println( responseObject.getFloat( "value" ) );
+      
+    } catch ( RuntimeException e ) {
+      
+      println( "Unable to parse response" );
+      println( messageBuffer );
+       
+    }
+    
     messageBuffer = "";
   }
   

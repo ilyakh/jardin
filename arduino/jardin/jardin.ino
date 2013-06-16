@@ -99,7 +99,7 @@ void setup() {
 
 
 
-/*
+
 void composeResponse( char* t, float v, char* u ) {
     
     aJsonObject* record;
@@ -112,16 +112,23 @@ void composeResponse( char* t, float v, char* u ) {
     
     aJson.deleteItem( record );
     
-    Serial.println(); //
+    Serial.println();
     
 }
-*/
+
 
 float random_reading() {
   return 0.001 * random( 1, 100 ); 
 }
 
 void reply( String command ) {
+  
+  composeResponse( "pH", random_reading(), "ppm" );
+  
+  
+  
+  /*
+  
   Serial.print( "Executing command: " );
   Serial.println( command );
   
@@ -146,6 +153,8 @@ void reply( String command ) {
        Serial.println();
     }
   }
+  
+  */
 }
 
 void empty_buffer() {
