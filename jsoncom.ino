@@ -42,6 +42,7 @@ typedef struct Target {
  *  3: liquid tank temperature
  *  4: upper chamber temperature
  *  5: liquid level
+ * 99: power on actuator test
  *  
  *  Additional targets:
  *  +0:  level of nutrient
@@ -63,6 +64,7 @@ typedef struct Target {
  *  3:  simulate relative humidity at x %, during next t seconds
  *  4:  simulate liquid tank temperature at x deg. C, during next t seconds
  *  5:  simulate upper chamber temperature at x deg. C, during next t seconds
+ *
  */
 Target targets[2];
 
@@ -73,6 +75,8 @@ void setup() {
   // Communication and handshake
   
   Serial.begin( BAUD_RATE );
+  
+  Serial.print( "Hello" );
   
   // Defines sensor targets
   // The callback procedure handles the request and returns a value 
@@ -159,6 +163,10 @@ void loop() {
   
   if ( complete ) { // process request
       
+      // debug
+      
+      Serial.print( request_buffer );
+      
       // toggle the state of buffer
       complete = false; 
       
@@ -180,6 +188,7 @@ void loop() {
 void serialEvent() {
   while ( Serial.available() ) {
     char in = (char) Serial.read();
+    
     request_buffer[buffer_index++] = in;
     
     if ( in == TERMINATOR ) {
